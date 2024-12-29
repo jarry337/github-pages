@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>국기 맞추기 게임</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            height: 100vh;
+            background-color: #f4f4f4;
+        }
+        .progress {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+        .flag-container {
+            margin: 20px;
+        }
+        .flag-container img {
+            width: 300px;
+            height: auto;
+            border: 2px solid #ccc;
+            border-radius: 10px;
+        }
+        .options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            width: 300px;
+        }
+        .option {
+            padding: 10px;
+            text-align: center;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .option:hover {
+            background-color: #0056b3;
+        }
+        .option.disabled {
+            cursor: not-allowed;
+            background-color: #aaa;
+        }
+        .option.incorrect {
+            border: 2px solid red;
+        }
+        .hearts {
+            margin: 20px;
+        }
+        .heart {
+            color: red;
+            font-size: 24px;
+            margin: 0 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="progress" id="progress">진행률: 0/100</div>
+    <div class="hearts" id="hearts">
+        ❤️ ❤️ ❤️
+    </div>
+    <div class="flag-container">
+        <img id="flag" src="" alt="국기">
+    </div>
+    <div class="options" id="options">
+        <button class="option" onclick="checkAnswer(this)"></button>
+        <button class="option" onclick="checkAnswer(this)"></button>
+        <button class="option" onclick="checkAnswer(this)"></button>
+        <button class="option" onclick="checkAnswer(this)"></button>
+    </div>
+
+    <audio id="correctSound" src="https://www.soundjay.com/button/beep-07.wav"></audio>
+    <audio id="wrongSound" src="https://www.soundjay.com/button/beep-10.wav"></audio>
+
+    <script>
+        const flags = [
+            { country: "미국", src: "https://flagcdn.com/us.svg" },
+            { country: "한국", src: "https://flagcdn.com/kr.svg" },
+            { country: "일본", src: "https://flagcdn.com/jp.svg" },
+            { country: "중국", src: "https://flagcdn.com/cn.svg" },
+            { country: "독일", src: "https://flagcdn.com/de.svg" },
+            { country: "프랑스", src: "https://flagcdn.com/fr.svg" },
+            { country: "영국", src: "https://flagcdn.com/gb.svg" },
+            { country: "이탈리아", src: "https://flagcdn.com/it.svg" },
+            { country: "스페인", src: "https://flagcdn.com/es.svg" },
+            { country: "캐나다", src: "https://flagcdn.com/ca.svg" },
+            { country: "호주", src: "https://flagcdn.com/au.svg" },
+            { country: "러시아", src: "https://flagcdn.com/ru.svg" },
+            { country: "브라질", src: "https://flagcdn.com/br.svg" },
+            { country: "인도", src: "https://flagcdn.com/in.svg" },
+            { country: "멕시코", src: "https://flagcdn.com/mx.svg" },
+            { country: "네덜란드", src: "https://flagcdn.com/nl.svg" },
+            { country: "벨기에", src: "https://flagcdn.com/be.svg" },
+            { country: "스웨덴", src: "https://flagcdn.com/se.svg" },
+            { country: "스위스", src: "https://flagcdn.com/ch.svg" },
+            { country: "포르투갈", src: "https://flagcdn.com/pt.svg" },
+            { country: "그리스", src: "https://flagcdn.com/gr.svg" },
+            { country: "터키", src: "https://flagcdn.com/tr.svg" },
+            { country: "태국", src: "https://flagcdn.com/th.svg" },
+            { country: "베트남", src: "https://flagcdn.com/vn.svg" },
+            { country: "말레이시아", src: "https://flagcdn.com/my.svg" },
+            { country: "싱가포르", src: "https://flagcdn.com/sg.svg" },
+            { country: "필리핀", src: "https://flagcdn.com/ph.svg" },
+            { country: "인도네시아", src: "https://flagcdn.com/id.svg" },
+            { country: "뉴질랜드", src: "https://flagcdn.com/nz.svg" },
+            { country: "사우디아라비아", src: "https://flagcdn.com/sa.svg" },
+            { country: "남아프리카 공화국", src: "https://flagcdn.com/za.svg" },
+            { country: "이집트", src: "https://flagcdn.com/eg.svg" },
+            { country: "아르헨티나", src: "https://flagcdn.com/ar.svg" },
+            { country: "콜롬비아", src: "https://flagcdn.com/co.svg" },
+            { country: "칠레", src: "https://flagcdn.com/cl.svg" },
+            { country: "페루", src: "https://flagcdn.com/pe.svg" },
+            { country: "핀란드", src: "https://flagcdn.com/fi.svg" },
+            { country: "노르웨이", src: "https://flagcdn.com/no.svg" },
+            { country: "덴마크", src: "https://flagcdn.com/dk.svg" },
+            { country: "오스트리아", src: "https://flagcdn.com/at.svg" },
+            { country: "체코", src: "https://flagcdn.com/cz.svg" },
+            { country: "헝가리", src: "https://flagcdn.com/hu.svg" },
+            { country: "폴란드", src: "https://flagcdn.com/pl.svg" },
+            { country: "아랍에미리트", src: "https://flagcdn.com/ae.svg" },
+            { country: "카타르", src: "https://flagcdn.com/qa.svg" },
+            { country: "쿠웨이트", src: "https://flagcdn.com/kw.svg" },
+            { country: "이스라엘", src: "https://flagcdn.com/il.svg" },
+            { country: "모로코", src: "https://flagcdn.com/ma.svg" },
+            { country: "나이지리아", src: "https://flagcdn.com/ng.svg" },
+            { country: "케냐", src: "https://flagcdn.com/ke.svg" },
+            { country: "에티오피아", src: "https://flagcdn.com/et.svg" },
+            { country: "탄자니아", src: "https://flagcdn.com/tz.svg" },
+            { country: "우간다", src: "https://flagcdn.com/ug.svg" },
+            { country: "튀니지", src: "https://flagcdn.com/tn.svg" },
+            { country: "리비아", src: "https://flagcdn.com/ly.svg" },
+            { country: "알제리", src: "https://flagcdn.com/dz.svg" },
+            { country: "잠비아", src: "https://flagcdn.com/zm.svg" },
+            { country: "짐바브웨", src: "https://flagcdn.com/zw.svg" },
+            { country: "모잠비크", src: "https://flagcdn.com/mz.svg" },
+            { country: "마다가스카르", src: "https://flagcdn.com/mg.svg" },
+            { country: "가나", src: "https://flagcdn.com/gh.svg" },
+            { country: "세네갈", src: "https://flagcdn.com/sn.svg" },
+            { country: "코트디부아르", src: "https://flagcdn.com/ci.svg" },
+            { country: "콩고 민주 공화국", src: "https://flagcdn.com/cd.svg" },
+            { country: "콩고 공화국", src: "https://flagcdn.com/cg.svg" }
+        ];
+
+        let hearts = 3;
+        let correctAnswer = "";
+        let remainingFlags = [...flags];
+        let progress = 0;
+
+        function loadFlag() {
+            if (remainingFlags.length === 0) {
+                alert("축하합니다! 게임을 완료했습니다!");
+                resetGame();
+                return;
+            }
+
+            const randomIndex = Math.floor(Math.random() * remainingFlags.length);
+            const flagData = remainingFlags[randomIndex];
+            remainingFlags.splice(randomIndex, 1);
+
+            document.getElementById('flag').src = flagData.src;
+            correctAnswer = flagData.country;
+
+            const options = document.querySelectorAll('.option');
+            const incorrectOptions = remainingFlags
+                .sort(() => Math.random() - 0.5)
+                .slice(0, 3)
+                .map(f => f.country);
+
+            const answers = [...incorrectOptions, correctAnswer].sort(() => Math.random() - 0.5);
+
+            options.forEach((option, index) => {
+                option.textContent = answers[index];
+                option.dataset.answer = answers[index];
+                option.classList.remove('incorrect', 'disabled');
+                option.disabled = false;
+            });
+
+            document.getElementById('progress').textContent = `진행률: ${progress}/100`;
+        }
+
+        function checkAnswer(button) {
+            const selectedAnswer = button.dataset.answer;
+            const correctSound = document.getElementById('correctSound');
+            const wrongSound = document.getElementById('wrongSound');
+
+            if (selectedAnswer === correctAnswer) {
+                correctSound.play();
+                progress++;
+                loadFlag();
+            } else {
+                wrongSound.play();
+                hearts--;
+                updateHearts();
+
+                button.classList.add('incorrect', 'disabled');
+                button.disabled = true;
+
+                if (hearts === 0) {
+                    alert("게임 오버! 다시 시작합니다.");
+                    resetGame();
+                }
+            }
+        }
+
+        function updateHearts() {
+            const heartsContainer = document.getElementById('hearts');
+            heartsContainer.innerHTML = '❤️ '.repeat(hearts).trim();
+        }
+
+        function resetGame() {
+            hearts = 3;
+            progress = 0;
+            remainingFlags = [...flags];
+            updateHearts();
+            loadFlag();
+        }
+
+        loadFlag();
+    </script>
+</body>
+</html>
+
